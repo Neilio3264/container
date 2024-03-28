@@ -19,6 +19,7 @@ char *stack_memory()
 template <typename... P>
 int run(P... params)
 {
+    clearenv();
     char *args[] = {(char *)params..., (char *)0};
     return execvp(args[0], args);
 }
