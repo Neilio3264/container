@@ -1,5 +1,6 @@
 #include <iostream>
 #include <sys/wait.h>
+#include <unistd.h>
 
 char *stack_memory()
 {
@@ -15,9 +16,16 @@ char *stack_memory()
     return stack + stackSize;
 }
 
+template <typename... P>
+int run(P... params)
+{
+    char *args[] = {(char *)params..., (char *)0};
+    return execvp(args[0], args);
+}
+
 int jail(void *args)
 {
-    std::cout << "Hello !! ( child ) " << std::endl;
+    run("/bin/sh");
     return EXIT_SUCCESS;
 }
 
