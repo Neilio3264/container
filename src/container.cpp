@@ -3,6 +3,16 @@
 #include <unistd.h>
 #include <sys/mount.h>
 
+int TRY(int status, const char *msg)
+{
+    if (status == -1)
+    {
+        perror(msg);
+        exit(EXIT_FAILURE);
+    }
+    return status;
+}
+
 char *stack_memory()
 {
     const int stackSize = 65536;
@@ -20,7 +30,7 @@ char *stack_memory()
 template <typename Function>
 void clone_process(Function &&function, int flags)
 {
-    auto pid = clone(function, stack_memory(), flags, 0);
+    TRY(clone(function, stack_memory(), flags, 0), "clone");
     wait(nullptr);
 }
 
@@ -29,6 +39,11 @@ int run(P... params)
 {
     char *args[] = {(char *)params..., (char *)0};
     return execvp(args[0], args);
+}
+
+void setHostName(std::string hostname)
+{
+    sethostname(hostname.c_str(), hostname.size());
 }
 
 void setup_variables()
@@ -55,7 +70,7 @@ int jail(void *args)
     mount("proc", "/proc", "proc", 0, 0);
 
     auto runThis = [](void *args) -> int
-    { run("/bin/sh"); };
+    { return run("/bin/sh"); };
 
     clone_process(runThis, SIGCHLD);
 
