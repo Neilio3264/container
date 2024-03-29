@@ -17,6 +17,13 @@ char *stack_memory()
     return stack + stackSize;
 }
 
+template <typename Function>
+void clone_process(Function &&function, int flags)
+{
+    auto pid = clone(function, stack_memory(), flags, 0);
+    wait(nullptr);
+}
+
 template <typename... P>
 int run(P... params)
 {
@@ -47,7 +54,10 @@ int jail(void *args)
 
     mount("proc", "/proc", "proc", 0, 0);
 
-    run("/bin/sh");
+    auto runThis = [](void *args) -> int
+    { run("/bin/sh"); };
+
+    clone_process(runThis, SIGCHLD);
 
     umount("/proc");
     return EXIT_SUCCESS;
@@ -58,7 +68,7 @@ int main(int argc, char **argv)
     std::cout << "Hello, World! ( parent ) " << std::endl;
     std::cout << "Parent ID: " << getpid() << std::endl;
 
-    clone(jail, stack_memory(), CLONE_NEWPID | CLONE_NEWUTS | SIGCHLD, 0);
-    wait(nullptr);
+    clone_process(jail, CLONE_NEWPID | CLONE_NEWUTS | SIGCHLD);
+
     return EXIT_SUCCESS;
 }
