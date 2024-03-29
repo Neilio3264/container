@@ -26,6 +26,8 @@ int run(P... params)
 
 int jail(void *args)
 {
+    std::cout << "Hello, World! ( child ) " << std::endl;
+    std::cout << "Child ID: " << getpid() << std::endl;
     run("/bin/sh");
     return EXIT_SUCCESS;
 }
@@ -33,8 +35,9 @@ int jail(void *args)
 int main(int argc, char **argv)
 {
     std::cout << "Hello, World! ( parent ) " << std::endl;
+    std::cout << "Parent ID: " << getpid() << std::endl;
 
-    clone(jail, stack_memory(), SIGCHLD, 0);
+    clone(jail, stack_memory(), CLONE_NEWUTS | SIGCHLD, 0);
     wait(nullptr);
     return EXIT_SUCCESS;
 }
