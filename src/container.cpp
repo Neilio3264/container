@@ -37,7 +37,7 @@ int main(int argc, char **argv)
     std::cout << "Hello, World! ( parent ) " << std::endl;
     std::cout << "Parent ID: " << getpid() << std::endl;
 
-    clone(jail, stack_memory(), CLONE_NEWUTS | SIGCHLD, 0);
+    clone(jail, stack_memory(), CLONE_NEWPID | CLONE_NEWUTS | SIGCHLD, 0);
     wait(nullptr);
     return EXIT_SUCCESS;
 }
