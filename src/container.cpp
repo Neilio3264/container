@@ -2,6 +2,12 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <sys/mount.h>
+#include <sys/stat.h>
+#include <string.h>
+#include <fcntl.h>
+
+#define CGROUP_FOLDER "/sys/fs/cgroup/pids/container/"
+#define concat(a, b) (a "" b)
 
 int TRY(int status, const char *msg)
 {
@@ -25,6 +31,24 @@ char *stack_memory()
     }
 
     return stack + stackSize;
+}
+
+void write_rule(const char *path, const char *value)
+{
+    int fp = open(path, O_WRONLY | O_APPEND);
+    write(fp, value, strlen(value));
+    close(fp);
+}
+
+void limitProcessCreation()
+{
+    mkdir(CGROUP_FOLDER, S_IRUSR | S_IWUSR);
+
+    const char *pid = std::to_string(getpid()).c_str();
+
+    write_rule(concat(CGROUP_FOLDER, "cgroup.procs"), pid);
+    write_rule(concat(CGROUP_FOLDER, "notify_on_release"), "1");
+    write_rule(concat(CGROUP_FOLDER, "pids.max"), "5");
 }
 
 template <typename Function>
@@ -64,6 +88,7 @@ int jail(void *args)
     std::cout << "Hello, World! ( child ) " << std::endl;
     std::cout << "Child ID: " << getpid() << std::endl;
 
+    limitProcessCreation();
     setup_variables();
     setup_root("./utils/root/");
 
